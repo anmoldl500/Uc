@@ -17,7 +17,7 @@ const client = new Client({
 
 client.on('qr', (qr) => {
     qrCodeData = qr;
-    console.log('नया QR जनरेट हुआ!');
+    console.log('नया QR जनरेट हुआ, अब Pairing Code माँगा जा सकता है!');
 });
 
 client.on('ready', () => {
@@ -33,6 +33,23 @@ client.on('disconnected', () => {
 
 client.initialize();
 
+// नया सिस्टम: Pairing Code निकालने के लिए
+app.get('/api/get-code', async (req, res) => {
+    const phone = req.query.phone;
+    
+    if (!phone) {
+        return res.json({ error: 'नंबर नहीं मिला। लिंक के अंत में अपना नंबर डालें (जैसे: ?phone=918954891112)' });
+    }
+    
+    try {
+        const code = await client.requestPairingCode(phone);
+        res.json({ success: true, pairingCode: code });
+    } catch (error) {
+        res.json({ error: 'कोड निकालने में दिक्कत आई। सुनिश्चित करें कि सर्वर रेडी है।' });
+    }
+});
+
+// पुराने सिस्टम
 app.get('/api/status', (req, res) => {
     if (isConnected) return res.json({ status: 'connected' });
     if (qrCodeData) return res.json({ status: 'qr_ready', qr: qrCodeData });
@@ -58,5 +75,5 @@ app.get('/api/get-groups', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`सर्वर पोर्ट ${PORT} पर चालू है!`));
